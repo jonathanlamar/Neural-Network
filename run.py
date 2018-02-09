@@ -1,4 +1,4 @@
-execfile('mlp.py')
+execfile('neural_net.py')
 from sklearn import datasets
 iris = datasets.load_iris()
 
@@ -35,5 +35,5 @@ for t in T:
 # Initialize the perceptron.
 P = multilayer_perceptron(Xprime, Tprime)
 
-print 'You have a neural network.  Its name is P.  Its training set is the iris petal and sepal \
-length dataset.  Try its methods out.'
+print('You have a neural network.  Its name is P.  Its training set is the iris petal and sepal \
+length dataset.  Try its methods out.')
