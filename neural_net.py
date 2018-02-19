@@ -1,5 +1,6 @@
 import numpy as np
-from ipython import embed()
+from IPython import embed
+from time import time
 
 class neural_net(object):
 	def __init__(self, nodes_vector = [2,1]):
@@ -33,39 +34,47 @@ class neural_net(object):
 		# self.nodes and self.weights.
 		W = np.array([])
 		for X in matrices:
-			W = np.append(W, np.reshape(np.array(X), X.size))
+			W = np.append(W, X.A1)
 		return W
 
-	def unflatten(self, l, weights = self.weights):
+	def unflatten(self, l, weights = []):
 		# Unflattens weights to return weight matrix for layer l
 		# l must be in range(1, len(nodes))
+		if len(weights) == 0:
+			weights = self.weights
 		N = sum([self.nodes[i+1] * (self.nodes[i] + 1) for i in range(l-1)])
-		return np.matrix(np.reshape(self.weights[N:N + self.nodes[l]*(self.nodes[l-1]+1)], (self.nodes[l], self.nodes[l-1]+1)))
+		return np.matrix(np.reshape(weights[N:N + self.nodes[l]*(self.nodes[l-1]+1)], (self.nodes[l], self.nodes[l-1]+1)))
 
-	def cost(self, X, y, weights = self.weights):
+	def cost(self, X, y, weights = []):
 		# Returns the cost function J(theta) at X and y.
 		# X and y are some kind of training, test, or validation set.
+		if len(weights) == 0:
+			weights = self.weights
 
 		# y has shape m by K
 		# h has shape m by K
 		L = len(self.nodes) # number of layers (including input and output layers)
 		K = self.nodes[-1] # dimension of output layer (number of classes)
 		m = X.shape[0] # number of training examples
-		h = self.h(X) # output matrix
+		h = self.h(X, weights) # output matrix
 
-		acc = 0
-		for i in range(1, m+1):
-			acc -= (y[i].transpose()*np.log(h[i]) + (1-y[i]).transpose()*np.log(1-h[i]))
+		acc1 = 0
+		for i in range(m):
+			acc1 -= (y[i]*np.log(h[i].T) + (1-y[i])*np.log(1-h[i].T))[0,0]
 
 		acc2 = 0
-		for l in range(L):
-			acc2 += sum(sum(self.theta(l, weights)[:, 1:]**2))
+		for l in range(1, L):
+			theta_squared = np.square(self.unflatten(l, weights)[1:, :])
+			acc2 += np.sum(theta_squared.A1)
 
-		return (1/m) * (acc + (self.penalty/2)*acc2)
+		return (1/m) * (acc1 + (self.penalty/2)*acc2)
 
-	def cost_gradient(self, X, y, weights = self.weights):
+	def cost_gradient(self, X, y, weights = []):
 		# Uses backprop algorithm from Andrew Ng's ML Course.
 		# Want to return grad(weights) at the point (X, y, weights).
+		if len(weights) == 0:
+			weights = self.weights
+
 		J = self.cost(X, y, weights)
 		num_weights = weights.size
 		L = len(self.nodes)
@@ -74,21 +83,24 @@ class neural_net(object):
 
 		for t in range(m):
 			# Get all a's and z's.
-			A = self.forward_prop(X[t].transpose())
+			A, Z = self.forward_prop(X[t])
 			err = []
-			err.append(A[-1] - y[t].transpose()) # append delta_L
+			err.append(A[-1] - y[t].T) # append delta_L
 
 			# The indexing here is very confusing.  What I want is err = [del_2, ..., del_L]
 			# and Grad = [DEL_1, ..., DEL_{L-1}], according to Ng's notation (which
 			# seems pretty standard).  Thus when I want to calculate DEL_l += a_l*del_{l+1},
 			# indexing forces me to compute Grad[i] = Grad[i] + A[i]*err[i]
-			for l in range(1, L):
-				l = i + 1
-				delta = np.multiply(self.theta(L-(i+1)).transpose()*ERR[-(i+1)], self.sig_gradient())
-				err.insert(0, delta[1:]) # Stick the truncated delta at the beginning of err
+			for l in range(L-1, 1, -1):
+				theta = self.unflatten(l, weights)
+				delta_lplus1 = err[0] # always take the first element of this list
+				gprime = self.insert_ones(self.sig_gradient(Z[l-2]))
+				delta_l = np.multiply(theta.T * delta_lplus1, gprime)
+				err.insert(0, delta_l[1:]) # Stick the truncated delta at the beginning of err
 
 			for i in range(L-1):
-				Grad[i] = Grad[i] + err[i] * A[i].transpose()
+				a = self.insert_ones(A[i])
+				Grad[i] = Grad[i] + err[i] * a.T
 
 		Grad = [(1/m)*G for G in Grad] # Scale all gradients appropriately
 
@@ -97,6 +109,8 @@ class neural_net(object):
 			col = np.matrix(np.zeros([theta.shape[0], 1])) # column of zeros
 			theta = np.append(col, theta[:, 1:], axis=1) # replace first column with zeros
 			Grad[i] = Grad[i] + (self.penalty / m) * theta
+
+		return self.flatten(Grad)
 
 	def numerical_gradient(self, e, X, y):
 		# For debugging, this is a numerical approximation cost_gradient.  Hopefully the difference will be small.
@@ -116,30 +130,44 @@ class neural_net(object):
 
 	def sigmoid(self, z):
 		exp = np.exp(-z)
-		return (exp + 1)**(-1)
+		return 1/(exp + 1)
 
 	def sig_gradient(self, z):
 		S = self.sigmoid(z)
 		T = 1 - S # elementwise operation
 		return np.multiply(S, T) # Hadamaard product of S and T
 
-	def h(self, x):
+	def h(self, x, weights = []):
+		if len(weights) == 0:
+			weights = self.weights
 		L = len(self.nodes) # number of layers (including input and output layers)
-		a = x # a^(1) is x, which is a column vector
+		a = x.T # a^(1) is x, which is a column vector
 		for l in range(1, L):
-			a = np.insert(a, 0, 1) # stick a 1 in there
-			z = NN.theta(l)*a # z^(l+1) = Theta^(l)a^(l)
+			a = self.insert_ones(a) # stick a 1 in there
+			z = self.unflatten(l)*a # z^(l+1) = Theta^(l)a^(l)
 			a = self.sigmoid(z) # a^(l+1) = sigma(z^(l+1))
-		return a
+		return a.T # TODO: Should I return a or a.T?
 
-	def forward_prop(self, x):
+	def forward_prop(self, x, weights = []):
+		if len(weights) == 0:
+			weights = self.weights
 		L = len(self.nodes) # number of layers (including input and output layers)
 		A = []
-		a = x # a^(1) is x, which is a column vector
+		Z = []
+		a = x.T # a^(1) is x.T, which we think of as a row of column vectors, and we operate elementwise
+		# (so just pretend x has dims self.nodes[0] x 1)
 		A.append(a)
 		for l in range(1, L):
-			a = np.insert(a, 0, 1) # stick a 1 in there
-			z = NN.theta(l)*a # z^(l+1) = Theta^(l)a^(l)
+			a = self.insert_ones(a) # stick a 1 in there
+			z = self.unflatten(l)*a # z^(l+1) = Theta^(l)a^(l)
+			Z.append(z)
 			a = self.sigmoid(z) # a^(l+1) = sigma(z^(l+1))
 			A.append(a)
-		return A
+		return A, Z
+
+	def accuracy(self, X, y):
+		h = self.h(X)
+		maxes = np.max(h, 1) # column vector of maxes of each row
+		preds = np.floor(h/maxes) # predictions of the form [i, j, k], where exactly one of i,j,k is 1, and the other two are 0
+		correct = np.all(preds == y, 1)
+		return np.sum(correct.A1) / y.shape[0]

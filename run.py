@@ -1,39 +1,31 @@
-#execfile('neural_net.py')
-from sklearn import datasets
-iris = datasets.load_iris()
+import numpy as np
+from matplotlib import pyplot as plt
+from neural_net import neural_net
+from IPython import embed
 
-X= iris.data[:, [2, 3]]
-T = iris.target
+# Make the training set
+A1 = 7 + np.random.randn(100)
+A2 = 3 + np.random.randn(100)
+A = np.matrix([list(a) + [1, 0, 0] for a in zip(A1, A2)])
 
-# Plot stuff.
-markers = ('s', 'x', 'o', '^', 'v')
-colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan')
-cmap = ListedColormap(colors[:len(np.unique(T))])
-x1_min, x1_max = X[:, 0].min(), X[:, 0].max() + 1
-x2_min, x2_max = X[:, 1].min(), X[:, 1].max() + 1
-xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, 0.02), np.arange(x2_min, x2_max, 0.02))
-plt.xlim(xx1.min(), xx1.max())
-plt.ylim(xx2.min(), xx2.max())
-for idx, cl in enumerate(np.unique(T)):
-	plt.scatter(x = X[T == cl, 0], y = X[T == cl, 1], alpha = 0.8, c = cmap(idx), marker = markers[idx], label = cl)
-plt.xlabel('petal length [cm]')
-plt.ylabel('petal width [cm]')
-plt.legend(loc = 'upper left')
-plt.show(block = False)
+B1 = 2 + np.random.randn(100)
+B2 = 8 + np.random.randn(100)
+B = np.matrix([list(b) + [0, 1, 0] for b in zip(B1, B2)])
 
-# Pre-process X and T into the correct form.
-Xprime = [np.matrix([[x[0]], [x[1]]]) for x in X]
-Tprime = []
-for t in T:
-	if t == 0:
-		Tprime.append(np.matrix([[1], [0], [0]]))
-	elif t == 1:
-		Tprime.append(np.matrix([[0], [1], [0]]))
-	elif t == 2:
-		Tprime.append(np.matrix([[0], [0], [1]]))
+C1 = 2 + np.random.randn(100)
+C2 = 1 + np.random.randn(100)
+C = np.matrix([list(c) + [0, 0, 1] for c in zip(C1, C2)])
 
-# Initialize the perceptron.
-P = multilayer_perceptron(Xprime, Tprime)
+D = np.concatenate((A, B, C))
+np.random.shuffle(D)
+X = D[:, :2]
+y = D[:, 2:]
 
-print('You have a neural network.  Its name is P.  Its training set is the iris petal and sepal \
-length dataset.  Try its methods out.')
+z = y * np.matrix([[0],[1],[2]])
+#plt.scatter(X[:, 0].A1, X[:, 1].A1, c = ((1/2)*z).A1)
+#plt.show()
+
+N = neural_net([2,4,4,3])
+print('You have a neural_net object N.')
+
+embed()
