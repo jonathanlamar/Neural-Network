@@ -1,4 +1,4 @@
-execfile('neural_net.py')
+#execfile('neural_net.py')
 from sklearn import datasets
 iris = datasets.load_iris()
 
