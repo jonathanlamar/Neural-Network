@@ -54,7 +54,7 @@ class neural_net(object):
 		# y has shape m by K
 		# h has shape m by K
 		L = len(self.nodes) # number of layers (including input and output layers)
-		K = self.nodes[-1] # dimension of output layer (number of classes)
+		K = self.nodes[L-1] # dimension of output layer (number of classes)
 		m = X.shape[0] # number of training examples
 		h = self.h(X, weights) # output matrix
 
@@ -64,7 +64,7 @@ class neural_net(object):
 
 		acc2 = 0
 		for l in range(1, L):
-			theta_squared = np.square(self.unflatten(l, weights)[1:, :])
+			theta_squared = np.square(self.unflatten(l, weights)[:, 1:])
 			acc2 += np.sum(theta_squared.A1)
 
 		return (1/m) * (acc1 + (self.penalty/2)*acc2)
@@ -75,11 +75,11 @@ class neural_net(object):
 		if len(weights) == 0:
 			weights = self.weights
 
-		J = self.cost(X, y, weights)
+		#J = self.cost(X, y, weights)
 		num_weights = weights.size
 		L = len(self.nodes)
 		Grad = [np.matrix(np.zeros([self.nodes[l], self.nodes[l-1]+1])) for l in range(1, L)]
-		m = X.shape[1]
+		m = X.shape[0]
 
 		for t in range(m):
 			# Get all a's and z's.
@@ -94,7 +94,7 @@ class neural_net(object):
 			for l in range(L-1, 1, -1):
 				theta = self.unflatten(l, weights)
 				delta_lplus1 = err[0] # always take the first element of this list
-				gprime = self.insert_ones(self.sig_gradient(Z[l-2]))
+				gprime = self.insert_ones(np.multiply(A[l-1], 1-A[l-1]))
 				delta_l = np.multiply(theta.T * delta_lplus1, gprime)
 				err.insert(0, delta_l[1:]) # Stick the truncated delta at the beginning of err
 
@@ -109,7 +109,6 @@ class neural_net(object):
 			col = np.matrix(np.zeros([theta.shape[0], 1])) # column of zeros
 			theta = np.append(col, theta[:, 1:], axis=1) # replace first column with zeros
 			Grad[i] = Grad[i] + (self.penalty / m) * theta
-
 		return self.flatten(Grad)
 
 	def numerical_gradient(self, e, X, y):
@@ -118,8 +117,8 @@ class neural_net(object):
 		perturb = np.zeros(self.weights.shape)
 		for i in range(self.weights.size):
 			perturb[i] = e
-			loss1 = self.cost(X, y, self.weights - perturb)
-			loss2 = self.cost(X, y, self.weights + perturb)
+			loss1 = self.cost(X, y, self.weights + perturb)
+			loss2 = self.cost(X, y, self.weights - perturb)
 			numgrad[i] = (loss1 - loss2)/(2*e)
 			perturb[i] = 0
 		return numgrad
@@ -132,10 +131,10 @@ class neural_net(object):
 		exp = np.exp(-z)
 		return 1/(exp + 1)
 
-	def sig_gradient(self, z):
-		S = self.sigmoid(z)
-		T = 1 - S # elementwise operation
-		return np.multiply(S, T) # Hadamaard product of S and T
+	#def sig_gradient(self, z):
+	#	S = self.sigmoid(z)
+	#	T = 1 - S # elementwise operation
+	#	return np.multiply(S, T) # Hadamaard product of S and T
 
 	def h(self, x, weights = []):
 		if len(weights) == 0:
@@ -144,7 +143,8 @@ class neural_net(object):
 		a = x.T # a^(1) is x, which is a column vector
 		for l in range(1, L):
 			a = self.insert_ones(a) # stick a 1 in there
-			z = self.unflatten(l)*a # z^(l+1) = Theta^(l)a^(l)
+			theta = self.unflatten(l, weights)
+			z = theta*a # z^(l+1) = Theta^(l)a^(l)
 			a = self.sigmoid(z) # a^(l+1) = sigma(z^(l+1))
 		return a.T # TODO: Should I return a or a.T?
 
@@ -159,7 +159,8 @@ class neural_net(object):
 		A.append(a)
 		for l in range(1, L):
 			a = self.insert_ones(a) # stick a 1 in there
-			z = self.unflatten(l)*a # z^(l+1) = Theta^(l)a^(l)
+			theta = self.unflatten(l, weights)
+			z = theta*a # z^(l+1) = Theta^(l)a^(l)
 			Z.append(z)
 			a = self.sigmoid(z) # a^(l+1) = sigma(z^(l+1))
 			A.append(a)

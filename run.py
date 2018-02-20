@@ -18,10 +18,16 @@ C = np.matrix([list(c) + [0, 0, 1] for c in zip(C1, C2)])
 
 D = np.concatenate((A, B, C))
 np.random.shuffle(D)
-X = D[:, :2]
+X = D[:, :2] 
 y = D[:, 2:]
 
-z = y * np.matrix([[0],[1],[2]])
+# Normalize data
+for i in range(2):
+	mu = np.mean(X[:, i])
+	sigma = np.std(X[:, i])
+	X[:, i] = (X[:, i] - mu)/sigma
+
+#z = y * np.matrix([[0],[1],[2]])
 #plt.scatter(X[:, 0].A1, X[:, 1].A1, c = ((1/2)*z).A1)
 #plt.show()
 
