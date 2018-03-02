@@ -27,9 +27,9 @@ for i in range(2):
 	sigma = np.std(X[:, i])
 	X[:, i] = (X[:, i] - mu)/sigma
 
-#z = y * np.matrix([[0],[1],[2]])
-#plt.scatter(X[:, 0].A1, X[:, 1].A1, c = ((1/2)*z).A1)
-#plt.show()
+z = y * np.matrix([[0],[1],[2]])
+plt.scatter(X[:, 0].A1, X[:, 1].A1, c = ((1/2)*z).A1)
+plt.show()
 
 N = neural_net([2,4,4,3])
 print('You have a neural_net object N.')

@@ -75,7 +75,6 @@ class neural_net(object):
 		if len(weights) == 0:
 			weights = self.weights
 
-		#J = self.cost(X, y, weights)
 		num_weights = weights.size
 		L = len(self.nodes)
 		Grad = [np.matrix(np.zeros([self.nodes[l], self.nodes[l-1]+1])) for l in range(1, L)]
@@ -111,21 +110,24 @@ class neural_net(object):
 			Grad[i] = Grad[i] + (self.penalty / m) * theta
 		return self.flatten(Grad)
 
-	def numerical_gradient(self, e, X, y):
-		# For debugging, this is a numerical approximation cost_gradient.  Hopefully the difference will be small.
-		numgrad = np.zeros(self.weights.shape)
-		perturb = np.zeros(self.weights.shape)
-		for i in range(self.weights.size):
-			perturb[i] = e
-			loss1 = self.cost(X, y, self.weights + perturb)
-			loss2 = self.cost(X, y, self.weights - perturb)
-			numgrad[i] = (loss1 - loss2)/(2*e)
-			perturb[i] = 0
-		return numgrad
+	#def numerical_gradient(self, e, X, y):
+	#	# For debugging, this is a numerical approximation cost_gradient.  Hopefully the difference will be small.
+	#	numgrad = np.zeros(self.weights.shape)
+	#	perturb = np.zeros(self.weights.shape)
+	#	for i in range(self.weights.size):
+	#		perturb[i] = e
+	#		loss1 = self.cost(X, y, self.weights + perturb)
+	#		loss2 = self.cost(X, y, self.weights - perturb)
+	#		numgrad[i] = (loss1 - loss2)/(2*e)
+	#		perturb[i] = 0
+	#	return numgrad
 
-	def train(self, X):
-		# TODO
-		print('Under construction.')
+	def train(self, X, y):
+		costs = np.array([self.cost(X, y)])
+		for i in range(50):
+			self.weights -= self.learning_rate * self.cost_gradient(X, y)
+			costs = np.append(costs, self.cost(X, y))
+		return costs
 
 	def sigmoid(self, z):
 		exp = np.exp(-z)
@@ -172,3 +174,7 @@ class neural_net(object):
 		preds = np.floor(h/maxes) # predictions of the form [i, j, k], where exactly one of i,j,k is 1, and the other two are 0
 		correct = np.all(preds == y, 1)
 		return np.sum(correct.A1) / y.shape[0]
+
+	def plot_decision_regions(self):
+		# TODO
+		print('under construction.')
