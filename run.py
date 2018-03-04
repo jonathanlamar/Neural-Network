@@ -34,4 +34,12 @@ plt.show()
 N = neural_net([2,4,4,3])
 print('You have a neural_net object N.')
 
+from mlxtend.plotting import plot_decision_regions
+def pdr():
+	w = np.array([int(z[i,0]) for i in range(len(z))])
+	fig = plt.figure(figsize=(10,8))
+	fig = plot_decision_regions(X, w, N)
+	plt.title('blah')
+	plt.show()
+
 embed()

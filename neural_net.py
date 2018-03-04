@@ -150,6 +150,22 @@ class neural_net(object):
 			a = self.sigmoid(z) # a^(l+1) = sigma(z^(l+1))
 		return a.T # TODO: Should I return a or a.T?
 
+	def predict(self, x, weights = []):
+		z = self.h(x, weights)
+		z2 = np.matrix(np.zeros(z.shape))
+		M, N = z2.shape
+		for i in range(M):
+			for j in range(N):
+				z2[i,j] = np.round(z[i,j])
+		col = np.matrix([[0], [1], [2]])
+		z3 = z2*col
+		#return np.array(z3.flatten())[0]
+
+		maxes = np.max(z, 1)
+		preds = np.floor(z/maxes)
+		z4 = preds * col
+		return np.array(z4.flatten())[0]
+
 	def forward_prop(self, x, weights = []):
 		if len(weights) == 0:
 			weights = self.weights
