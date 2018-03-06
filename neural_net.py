@@ -123,11 +123,11 @@ class neural_net(object):
 	#	return numgrad
 
 	def train(self, X, y):
-		costs = np.array([self.cost(X, y)])
+		#costs = np.array([self.cost(X, y)])
 		for i in range(50):
 			self.weights -= self.learning_rate * self.cost_gradient(X, y)
-			costs = np.append(costs, self.cost(X, y))
-		return costs
+			#costs = np.append(costs, self.cost(X, y))
+		return self.cost(X, y)
 
 	def sigmoid(self, z):
 		exp = np.exp(-z)
@@ -151,6 +151,7 @@ class neural_net(object):
 		return a.T # TODO: Should I return a or a.T?
 
 	def predict(self, x, weights = []):
+		# TODO: For pdr() method in run.py.  Needs to be generalized or deleted.
 		z = self.h(x, weights)
 		z2 = np.matrix(np.zeros(z.shape))
 		M, N = z2.shape
@@ -185,6 +186,7 @@ class neural_net(object):
 		return A, Z
 
 	def accuracy(self, X, y):
+		# TODO: This also doesn't generalize.
 		h = self.h(X)
 		maxes = np.max(h, 1) # column vector of maxes of each row
 		preds = np.floor(h/maxes) # predictions of the form [i, j, k], where exactly one of i,j,k is 1, and the other two are 0
