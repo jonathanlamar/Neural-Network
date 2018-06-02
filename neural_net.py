@@ -11,11 +11,9 @@ class neural_net(object):
 		N = sum([self.nodes[i+1] * (self.nodes[i] + 1) for i in range(len(self.nodes)-1)])
 		self.weights = np.random.randn(N) # initialize weights
 
-		# Learning rate.  Used to scale cost gradient vector for backpropagation.
-		self.learning_rate = 0.1
+		self.learning_rate = 0.1 # Learning rate.  Used to scale cost gradient vector for backpropagation.
 
-		# Usually written as lambda.  penalty factor for the norm of the matrix
-		self.penalty = 1
+		self.penalty = 1 # Usually written as lambda.  penalty factor for the norm of the matrix
 
 	def set_learning_rate(self, val):
 		self.learning_rate = val
@@ -30,15 +28,14 @@ class neural_net(object):
 
 	def _flatten(self, matrices):
 		# Flattens a list of matrices into an array.
-		# No check on dimension, although it should match
-		# self.nodes and self.weights.
+		# No check on dimension, although it should match self.nodes and self.weights.
 		W = np.array([])
 		for X in matrices:
 			W = np.append(W, X.A1)
 		return W
 
 	def _unflatten(self, l, weights = []):
-		# Unflattens weights to return weight matrix for layer l
+		# Unflattens weights to return weight matrix for layer l.
 		# l must be in range(1, len(nodes))
 		if len(weights) == 0:
 			weights = self.weights
@@ -51,8 +48,7 @@ class neural_net(object):
 		if len(weights) == 0:
 			weights = self.weights
 
-		# y has shape m by K
-		# h has shape m by K
+		# y has shape m by K, h has shape m by K
 		L = len(self.nodes) # number of layers (including input and output layers)
 		K = self.nodes[L-1] # dimension of output layer (number of classes)
 		m = X.shape[0] # number of training examples
@@ -129,11 +125,6 @@ class neural_net(object):
 		exp = np.exp(-z)
 		return 1/(exp + 1)
 
-	#def sig_gradient(self, z):
-	#	S = self._sigmoid(z)
-	#	T = 1 - S # elementwise operation
-	#	return np.multiply(S, T) # Hadamaard product of S and T
-
 	def h(self, x, weights = []):
 		if len(weights) == 0:
 			weights = self.weights
@@ -145,23 +136,6 @@ class neural_net(object):
 			z = theta*a # z^(l+1) = Theta^(l)a^(l)
 			a = self._sigmoid(z) # a^(l+1) = sigma(z^(l+1))
 		return a.T # TODO: Should I return a or a.T?
-
-	def predict(self, x, weights = []):
-		# TODO: For pdr() method in run.py.  Needs to be generalized or deleted.
-		z = self.h(x, weights)
-		z2 = np.matrix(np.zeros(z.shape))
-		M, N = z2.shape
-		for i in range(M):
-			for j in range(N):
-				z2[i,j] = np.round(z[i,j])
-		col = np.matrix([[0], [1], [2]])
-		z3 = z2*col
-		#return np.array(z3.flatten())[0]
-
-		maxes = np.max(z, 1)
-		preds = np.floor(z/maxes)
-		z4 = preds * col
-		return np.array(z4.flatten())[0]
 
 	def _forward_prop(self, x, weights = []):
 		if len(weights) == 0:
