@@ -79,7 +79,7 @@ class neural_net(object):
 		for t in range(m):
 			# Get all a's and z's.
 			A, Z = self._forward_prop(X[t])
-			err = []
+			err = [] # For keeping track of the propagation of errors.  As we go backwards, newly calculated errors are inserted at the beginning of this list.
 			err.append(A[-1] - y[t].T) # append delta_L
 
 			# The indexing here is very confusing.  What I want is err = [del_2, ..., del_L]
